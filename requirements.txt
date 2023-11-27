@@ -1,0 +1,9 @@
+ray[rllib]==2.5.0
+gym 
+tensorboardX 
+tensorboard
+torch 
+numpy
+jax
+matplotlib
+gymnasium
