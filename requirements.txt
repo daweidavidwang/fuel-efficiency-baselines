@@ -2,8 +2,9 @@ ray[rllib]==2.5.0
 gym 
 tensorboardX 
 tensorboard
+tensorflow_probability
 torch 
 numpy
-jax
+jax[cpu]
 matplotlib
 gymnasium
