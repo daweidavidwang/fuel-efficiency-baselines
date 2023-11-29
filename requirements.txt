@@ -8,3 +8,4 @@ numpy
 jax[cpu]
 matplotlib
 gymnasium
+scikit-learn

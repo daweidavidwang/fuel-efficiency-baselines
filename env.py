@@ -1,6 +1,6 @@
 import gymnasium as gym
 from core.car import Car
-from core.fuel_model import FuelModel
+
 from core.slope_map import Slope
 import numpy as np 
 from gymnasium.spaces import Box
@@ -22,7 +22,7 @@ class Env(gym.Env):
         self.slope_map = Slope(ALTI_X, ALTI)
 
         self.Mveh = env_config['Mveh']
-        self.fuel_model = FuelModel(Mveh=self.Mveh)
+        self.fuel_model = env_config['fuel_model']
 
         self.target_v = env_config['target_v']  ## m/s
         self.ds = env_config['ds'] ## travel distance for every step (m)
