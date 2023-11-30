@@ -7,6 +7,7 @@ from ray import tune
 from core.fuel_model_real import FuelModel
 from core.mission_scenario_loader import MissionLoader
 from core.slope_map import Slope
+from ray.tune.stopper import TrialPlateauStopper, MaximumIterationStopper
 
 fuel_model_data_path = '/home/dawei/Downloads/0695e99d-a2ca-45d4-ace0-ab16e84cd94c.pkl'
 mission_scenario = MissionLoader(fuel_model_data_path)
@@ -41,7 +42,11 @@ config = config.environment(env=Env,env_config={
     'slope_range':fuel_model.slope_range
 }
 )
-config = config.rollouts(num_rollout_workers=15, rollout_fragment_length="auto")
+# def stop_fn(trial_id: str, result: dict) -> bool:
+#     print(str(result))
+#     return result["episode_reward_mean"]
+
+config = config.rollouts(num_rollout_workers=1, rollout_fragment_length="auto")
 config = config.callbacks(CustomLoggerCallback)
 config = config.resources(num_gpus=1, num_cpus_per_worker=1)
 # Use to_dict() to get the old-style python config dict
@@ -49,7 +54,7 @@ config = config.resources(num_gpus=1, num_cpus_per_worker=1)
 tune.Tuner(  
     "PPO",
     run_config=air.RunConfig(name='PPO_train_rl_fuel_realdata', \
-    stop={"training_iteration": 100}, verbose=3, log_to_file=True, 
+    stop=[TrialPlateauStopper(metric='episode_reward_mean', std=5, num_results=10), MaximumIterationStopper(max_iter=10)], verbose=3, log_to_file=True, 
         checkpoint_config=air.CheckpointConfig(
             num_to_keep = 40,
             checkpoint_frequency = 5
@@ -57,3 +62,6 @@ tune.Tuner(
         ),
     param_space=config.to_dict(),
 ).fit()
+
+
+
