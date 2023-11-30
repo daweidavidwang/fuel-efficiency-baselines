@@ -18,8 +18,11 @@ class Monitor(object):
         fig, (ax)= plt.subplots(1, 1)
         ax1 = ax.twinx()
 
-        line,  = ax1.plot(np.array(self.data_record['Ge']), label='Ge')
-        line,  = ax.plot(np.array(self.data_record['speed']), label='speed')
+        line,  = ax1.plot(np.array(self.data_record['Ge']), label='Ge',  color='red')
+        line,  = ax.plot(np.array(self.data_record['speed']), label='speed', color='blue')
         ax.set_xlabel('step')
+        ax.set_ylabel('Speed(m/s)')
+        ax1.set_ylabel('Slope (pi)')
         ax.legend()
+        ax.set_title('Totoal Fuel='+str(self.data_record['total_fuel'][-1]))
         plt.show()
