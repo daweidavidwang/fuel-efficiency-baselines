@@ -37,3 +37,23 @@ class FuelModel(object):
         fuel = fuel_rate * ds / v / 3.6e3
 
         return fuel
+
+    def cal_fuel_rate(self, a, v, grad):
+        wind = v* self.k_d * v**2
+        rolling_stable = v* self.Mveh * self.g * self.mu_s
+        rolling_weight = v* self.Mveh * self.g * np.sin(grad)
+        rolling_running = v* self.Mveh * self.g * self.mu_d * v
+        Fac = self.Mveh * a
+        pe = self.loss_p + (wind + rolling_stable + rolling_running + rolling_weight + Fac)/(1000*self.gb_eff)
+        if pe<0:
+            pe = 0.0
+        fuel_rate = 0.0
+        for i in range(len(self.coefs)):
+            fuel_rate += self.coefs[i] * pow(pe, i)
+
+        fuel_rate = pe*fuel_rate
+
+        if fuel_rate<0:
+            fuel_rate = 0.0
+
+        return fuel_rate

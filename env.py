@@ -39,6 +39,15 @@ class Env(gym.Env):
             'speed_constraints': env_config['speed_constraints']
         })
 
+        self.veh_const = Car(veh_config={
+            'start_location':self.start_location,
+            'slope_map':self.slope_map,
+            'fuel_estimator':self.fuel_model,
+            'velocity':self.target_v,
+            'ds': self.ds,
+            'speed_constraints': env_config['speed_constraints']
+        })
+
         self.obs_horizon = env_config['obs_horizon'] #forward distance that agent can observe
         self.obs_step = env_config['obs_step'] # len(obs) = obs_horizon/obs_step
 
@@ -96,7 +105,7 @@ class Env(gym.Env):
     def compute_reward(self, reward_param={}):
         fuel = reward_param['fuel']
         acc_pow2 = reward_param['acc']
-        return -fuel - acc_pow2
+        return -fuel 
 
     def reset(self, seed=None, options=None):
         if self.start_location_range:
@@ -129,12 +138,14 @@ class Env(gym.Env):
             ## risk of timeout
             action = self.acc_constraints[1]
         position, velocity, fuel, total_fuel, slope = self.veh.step(action)
+        _, _, _, total_fuel_const, _ = self.veh_const.step(0.0)
         obs = self.get_ahead_slope()
         past_speed_est, remaining_distance, remaining_time = self.get_obs()
         obs = np.append(obs, [past_speed_est, remaining_distance, remaining_time])
 
         info = {
-            'total_fuel':total_fuel
+            'total_fuel':total_fuel,
+            'const_baseline_fuel':total_fuel_const
         }
         reward_param = {
             'fuel': fuel,

@@ -9,7 +9,7 @@ from core.mission_scenario_loader import MissionLoader
 from core.slope_map import Slope
 from ray.tune.stopper import TrialPlateauStopper, MaximumIterationStopper
 
-fuel_model_data_path = '/home/dawei/Downloads/0695e99d-a2ca-45d4-ace0-ab16e84cd94c.pkl'
+fuel_model_data_path = '/home/dawei/Documents/pkl_data/2d070af5-e7fd-4214-9968-69bd5a4643cb.pkl'
 mission_scenario = MissionLoader(fuel_model_data_path)
 mission_sceanrio_X, mission_sceanrio_height, mission_sceanrio_slope = mission_scenario.get_map_data()
 slope_map = Slope()
@@ -20,7 +20,8 @@ ray.init(num_gpus=1, num_cpus=16)
 config = PPOConfig()
 # Update the config object.
 # config = config.training(lr=tune.grid_search([0.001, 0.0001]))
-config = config.training(lr=1e-4, train_batch_size = 2048*64*2, sgd_minibatch_size=2048*32*2)
+# config = config.training(lr=1e-4, train_batch_size = 2048*64*2, sgd_minibatch_size=2048*32*2)
+config = config.training(lr=1e-4, train_batch_size = 64*2, sgd_minibatch_size=32*2)
 # lr_schedule=[[0, 1e-4], [20000000, 1e-5]]
 # config = config.training(lr=tune.grid_search([ 1e-6,  5e-6, 1e-3, 1e-4, 1e-5]), train_batch_size = 2048*64*2, sgd_minibatch_size=2048*32*2)
 fuel_model =FuelModel(fuel_model_data_path)
@@ -54,7 +55,7 @@ config = config.resources(num_gpus=1, num_cpus_per_worker=1)
 tune.Tuner(  
     "PPO",
     run_config=air.RunConfig(name='PPO_train_rl_fuel_realdata', \
-    stop=[TrialPlateauStopper(metric='episode_reward_mean', std=5, num_results=10), MaximumIterationStopper(max_iter=10)], verbose=3, log_to_file=True, 
+    stop={"training_iteration": 500}, verbose=3, log_to_file=True, 
         checkpoint_config=air.CheckpointConfig(
             num_to_keep = 40,
             checkpoint_frequency = 5
@@ -65,3 +66,4 @@ tune.Tuner(
 
 
 
+# stop=[TrialPlateauStopper(metric='episode_reward_mean', std=5, num_results=10), MaximumIterationStopper(max_iter=3000)]
