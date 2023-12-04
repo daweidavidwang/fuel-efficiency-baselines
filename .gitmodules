@@ -1,3 +1,4 @@
 [submodule "nfm"]
 	path = nfm
 	url = git@gitlab.inceptio.tech:xlab/nfm.git
+	branch = dawei/dev
