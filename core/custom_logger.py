@@ -54,6 +54,7 @@ class CustomLoggerCallback(DefaultCallbacks):
     ):
         episode.custom_metrics["total_fuel"] = worker.env.veh.total_fuel
         episode.custom_metrics["saved_fuel"] = (worker.env.veh_const.total_fuel - worker.env.veh.total_fuel)/worker.env.veh_const.total_fuel
+        episode.custom_metrics["const_fuel"] = worker.env.veh_const.total_fuel
         # episode.custom_metrics["saved_fuel"] = (worker.env.const_benchmark_veh.total_fuel - worker.env.veh.total_fuel)/worker.env.const_benchmark_veh.total_fuel
         # episode.custom_metrics["fuel_efficency_index"] = worker.env.veh.total_fuel/(worker.env.veh.position-worker.env.start_location)
         # episode.custom_metrics["avg_speed"] = (worker.env.veh.position-worker.env.start_location)/worker.env.veh.total_running_time

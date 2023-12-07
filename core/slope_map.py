@@ -70,7 +70,11 @@ class Slope(object):
             dx_elem = np.array([x_node[i+1] - x_node[i] for i in range(0, len(x_node)-1)])
             dh_elem = np.array([h_node[i+1] - h_node[i] for i in range(0, len(h_node)-1)])
             Ge = np.arctan(dh_elem/dx_elem)
-            
+            for i in range(len(Ge)):
+                if math.isnan(Ge[i]):
+                    ## prevent nan in Ge
+                    Ge[i] = 0.0
+
             return Ge
         else: 
             print('incorrect mode setup')

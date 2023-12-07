@@ -21,6 +21,7 @@ class FuelModel(object):
         slope = []
         dis = []
         t = []
+        self.height = []
         veh_weight = []
 
         for i in range(self.data_loader.moment_total_length):
@@ -42,12 +43,19 @@ class FuelModel(object):
         x.append(vel)
         x.append(slope)
         x = np.transpose(x)
+        self.dis= dis
         self.backup_fuel.fit(x, np.transpose(fuel)) #
         self.acc_range = [min(acc), max(acc)]
         self.vel_range = [min(vel), max(vel)]
         self.slope_range = [min(slope), max(slope)]
         self.vehicle_mass_kg = veh_weight
         self.slope = slope
+
+        for idx in range(len(self.slope)):
+            if idx == 0:
+                self.height.extend([0.0])
+            else:
+                self.height.extend([self.height[-1]+self.slope[idx-1]*(self.dis[idx]-self.dis[idx-1])])
 
     def data_filter(self, distance, t, acc, vel, fuel, slope, weight):
         for i in range(len(fuel)):
@@ -70,18 +78,21 @@ class FuelModel(object):
             acc[i] = np.mean(prod_acc)
             vel[i] = np.mean(prod_vel)
             fuel[i] = np.mean(prod_fuel)
-            slope[i] = np.mean(prod_slope)
+            # slope[i] = np.mean(prod_slope)
             weight[i] = np.mean(prod_weight)
 
         return distance, t, acc, vel, fuel, slope, weight
-
+    
+    def get_map_data(self):
+        return self.dis, self.height, self.slope
+    
     def cal_fuel(self, a, v, grad, ds):
         fuel_rate = self.interp_fuel(a, v, grad)
-        if math.isnan(fuel_rate):
-        ## to prevent nan
-            fuel_rate = self.backup_fuel.predict([[a, v, grad]])[0]
-            if fuel_rate<0:
-                fuel_rate = 0.0
+        # if math.isnan(fuel_rate):
+        # ## to prevent nan
+        #     fuel_rate = self.backup_fuel.predict([[a, v, grad]])[0]
+        #     if fuel_rate<0:
+        #         fuel_rate = 0.0
 
         # fuel rate = l per h to g/s
         fuel_rate = fuel_rate*1000*0.83 / 3.6e3
@@ -112,9 +123,9 @@ class FuelModel(object):
         v_max = self.vel_range[1]
         slope_min = self.slope_range[0]
         slope_max = self.slope_range[1]
-        a_step = (a_max - a_min)/20.0
-        v_step = (v_max - v_min)/20.0
-        slope_step = (slope_max - slope_min)/20.0
+        a_step = (a_max - a_min)/100.0
+        v_step = (v_max - v_min)/100.0
+        slope_step = (slope_max - slope_min)/100.0
 
         acc_arange = np.arange(a_min, a_max, a_step)
         v_arange = np.arange(v_min, v_max, v_step)
@@ -178,20 +189,20 @@ class FuelModel(object):
 
         nan_case_coordinatesx = []
         nan_case_coordinatesy = []
-        a_fail_case_coordinatesx = []
-        a_fail_case_coordinatesy = []
+        v_fail_case_coordinatesx = []
+        v_fail_case_coordinatesy = []
         for (ai, si) in v_nan_case:
             nan_case_coordinatesx.extend([acc_arange[ai]])
             nan_case_coordinatesy.extend([slope_arange[si]])
 
-        for (ai, si) in a_fail_case:
-            a_fail_case_coordinatesx.extend([acc_arange[vi]])
-            a_fail_case_coordinatesy.extend([slope_arange[si]])
+        for (ai, si) in v_fail_case:
+            v_fail_case_coordinatesx.extend([acc_arange[ai]])
+            v_fail_case_coordinatesy.extend([slope_arange[si]])
 
 
         if display:
             plt.scatter(nan_case_coordinatesx, nan_case_coordinatesy, marker='^')
-            plt.scatter(a_fail_case_coordinatesx, a_fail_case_coordinatesy, marker='o')
+            plt.scatter(v_fail_case_coordinatesx, v_fail_case_coordinatesy, marker='o')
             plt.savefig(self.data_name+'checkv.png')
             plt.clf()
 
@@ -213,25 +224,26 @@ class FuelModel(object):
 
         nan_case_coordinatesx = []
         nan_case_coordinatesy = []
-        a_fail_case_coordinatesx = []
-        a_fail_case_coordinatesy = []
+        slope_fail_case_coordinatesx = []
+        slope_fail_case_coordinatesy = []
         for (ai, vi) in s_nan_case:
             nan_case_coordinatesx.extend([acc_arange[ai]])
             nan_case_coordinatesy.extend([v_arange[vi]])
 
-        for (ai, vi) in a_fail_case:
-            a_fail_case_coordinatesx.extend([acc_arange[vi]])
-            a_fail_case_coordinatesy.extend([v_arange[vi]])
+        for (ai, vi) in slope_fail_case:
+            slope_fail_case_coordinatesx.extend([acc_arange[ai]])
+            slope_fail_case_coordinatesy.extend([v_arange[vi]])
 
         if display:
             plt.scatter(nan_case_coordinatesx, nan_case_coordinatesy, marker='^')
-            plt.scatter(a_fail_case_coordinatesx, a_fail_case_coordinatesy, marker='o')
+            plt.scatter(slope_fail_case_coordinatesx, slope_fail_case_coordinatesy, marker='o')
             plt.savefig(self.data_name+'checkslope.png')
             plt.clf()
             print('check finished')
 
+        mid_vel = (self.vel_range[1] - self.vel_range[0])/2 + self.vel_range[0]
         a_border = [0.0, 0.0]
-        v_border = [15.0, 15.0]
+        v_border = [mid_vel, mid_vel]
         s_border = [0.0, 0.0]
         a_fixed = False
         v_fixed = False
@@ -272,8 +284,22 @@ class FuelModel(object):
                     a_fixed = True
                     v_border = [v_border[0]+v_step, v_border[1]-v_step]
                     v_fixed = True
+            for (ai, vi) in slope_fail_case:
+                if a_border[0]< acc_arange[ai] < a_border[1] and \
+                    v_border[0]< v_arange[vi]< v_border[1]:
+                    a_border = [a_border[0]+a_step, a_border[1]-a_step]
+                    a_fixed = True
+                    v_border = [v_border[0]+v_step, v_border[1]-v_step]
+                    v_fixed = True
 
             for (ai, si) in v_nan_case:
+                if a_border[0]< acc_arange[ai] < a_border[1] and \
+                    s_border[0]< slope_arange[si] < s_border[1]:
+                    a_border = [a_border[0]+a_step, a_border[1]-a_step]
+                    a_fixed = True
+                    s_border = [s_border[0]+slope_step, s_border[1]-slope_step]
+                    s_fixed = True
+            for (ai, si) in v_fail_case:
                 if a_border[0]< acc_arange[ai] < a_border[1] and \
                     s_border[0]< slope_arange[si] < s_border[1]:
                     a_border = [a_border[0]+a_step, a_border[1]-a_step]
@@ -288,10 +314,22 @@ class FuelModel(object):
                     s_fixed = True
                     v_border = [v_border[0]+v_step, v_border[1]-v_step]
                     v_fixed = True
+            for (vi, si) in a_fail_case:
+                if s_border[0]< slope_arange[si] < s_border[1] and \
+                    v_border[0]< v_arange[vi]< v_border[1]:
+                    s_border = [s_border[0]+slope_step, s_border[1]-slope_step]
+                    s_fixed = True
+                    v_border = [v_border[0]+v_step, v_border[1]-v_step]
+                    v_fixed = True
 
-        # print(v_border)
-        # print(a_border)
-        # print(s_border)
+        print(v_border)
+        print(a_border)
+        print(s_border)
         self.v_border = v_border
         self.a_border = a_border
         self.s_border = s_border
+
+if __name__ == "__main__":
+    data_path = '/home/dawei/Documents/pkl_data/2d070af5-e7fd-4214-9968-69bd5a4643cb.pkl'
+    fmr = FuelModel(data_path)
+    fmr.auto_validation(True)

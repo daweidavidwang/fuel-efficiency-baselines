@@ -120,6 +120,14 @@ class Env(gym.Env):
             'ds': self.ds,
             'speed_constraints': self.env_config['speed_constraints']
         })
+        self.veh_const = Car(veh_config={
+            'start_location':self.start_location,
+            'slope_map':self.slope_map,
+            'fuel_estimator':self.fuel_model,
+            'velocity':self.target_v,
+            'ds': self.ds,
+            'speed_constraints': self.env_config['speed_constraints']
+        })
         self._step = 0
 
         obs = self.get_ahead_slope()
@@ -158,12 +166,12 @@ class Env(gym.Env):
             reward =  - total_fuel
         else:
             terminated = False
-
-        if self.veh.total_running_time> self.max_travel_time:
-            truncated = True
-            reward =  - total_fuel
-        else:
-            truncated = False
+        truncated = False
+        # if self.veh.total_running_time> self.max_travel_time:
+        #     truncated = True
+        #     reward =  - total_fuel
+        # else:
+        #     truncated = False
         self.monitor.step(self, reward, slope)
         self._step += 1
 
