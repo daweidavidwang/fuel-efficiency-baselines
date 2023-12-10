@@ -8,7 +8,7 @@ from core.fuel_model_real import FuelModel
 from core.slope_map import Slope
 from ray.tune.stopper import TrialPlateauStopper, MaximumIterationStopper
 
-fuel_model_data_path = '/home/dawei/Documents/pkl_data/2d070af5-e7fd-4214-9968-69bd5a4643cb.pkl'
+fuel_model_data_path = '2d070af5-e7fd-4214-9968-69bd5a4643cb.pkl'
 fuel_model =FuelModel(fuel_model_data_path)
 
 # slope_map = Slope()
@@ -29,7 +29,7 @@ config = PPOConfig()
 # Update the config object.
 # config = config.training(lr=tune.grid_search([0.001, 0.0001]))
 # config = config.training(lr=1e-4, train_batch_size = 2048*64*2, sgd_minibatch_size=2048*32*2)
-config = config.training(lr=1e-4, train_batch_size = 64*2, sgd_minibatch_size=32*2)
+config = config.training(lr=1e-4, train_batch_size = 2048*64*4, sgd_minibatch_size=2048*32*4)
 # lr_schedule=[[0, 1e-4], [20000000, 1e-5]]
 # config = config.training(lr=tune.grid_search([ 1e-6,  5e-6, 1e-3, 1e-4, 1e-5]), train_batch_size = 2048*64*2, sgd_minibatch_size=2048*32*2)
 

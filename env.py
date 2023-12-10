@@ -28,6 +28,10 @@ class Env(gym.Env):
         self.start_location_range = env_config['start_location_range'] if 'start_location_range' in env_config else None
 
         self.travel_distance = env_config['travel_distance']
+        self.travel_distance_range = env_config['travel_distance_range'] if 'travel_distance_range' in env_config else None
+
+        self.start_velocity_range = env_config['start_velocity_range'] if 'start_velocity_range' in env_config else None
+
         self.end_location = self.start_location + self.travel_distance
         self.max_travel_time = self.travel_distance/self.target_v 
         self.veh = Car(veh_config={
@@ -108,15 +112,36 @@ class Env(gym.Env):
         return -fuel 
 
     def reset(self, seed=None, options=None):
+        start_velocity = self.target_v
+        
+        # for training from a random state
+        if self.travel_distance_range:
+            self.travel_distance = random.randint(self.travel_distance_range[0], self.travel_distance_range[1])
+
         if self.start_location_range:
             self.start_location = random.randint(self.start_location_range[0], self.start_location_range[1])
             self.end_location = self.start_location + self.travel_distance
+        
+        if self.start_velocity_range:
+            start_velocity = random.randint(self.start_velocity_range[0], self.start_velocity_range[1])
+
+        ## for evaluation from a random state
+        if options and 'horizon' in options:
+            self.travel_distance = options['horizon']
+
+        if options and 'start_location' in options:
+            self.start_location = options['start_location']
+            self.end_location = self.start_location + self.travel_distance
+
+        if options and 'start_velocity' in options:
+            start_velocity = options['start_velocity']
+
 
         self.veh = Car(veh_config={
             'start_location':self.start_location,
             'slope_map':self.slope_map,
             'fuel_estimator':self.fuel_model,
-            'velocity':self.target_v,
+            'velocity':start_velocity,
             'ds': self.ds,
             'speed_constraints': self.env_config['speed_constraints']
         })
