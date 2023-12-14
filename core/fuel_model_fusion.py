@@ -9,54 +9,66 @@ from scipy.interpolate import LinearNDInterpolator
 import math
 from sklearn import linear_model
 import matplotlib.pyplot as plt
-from utils.utils import smooth
+
 
 class FuelModel(object):
     def __init__(self, data_path):
-        self.data_loader = DataLoader(data_path)
-        self.data_name = data_path.split('/')[-1]
-        acc = []
-        vel = []
-        fuel = []
-        slope = []
-        dis = []
-        t = []
-        self.height = []
-        veh_weight = []
-
-        for i in range(self.data_loader.moment_total_length):
-            dp = self.data_loader.GetTBasedData(i)
-            if dp.is_brake or dp.gear_position != 12:
-                continue
-            dis.extend([dp.total_distance_m])
-            t.extend([dp.timestamp_sec])
-            acc.extend([dp.acc])
-            vel.extend([dp.speed])
-            fuel.extend([dp.fuel_lph])
-            slope.extend([dp.slope_rad])
-            veh_weight.extend([dp.vehicle_mass_kg])
-        dis, t, acc, vel, fuel, slope, veh_weight = self.data_filter(dis, t, acc, vel, fuel, slope, veh_weight)
-        self.interp_fuel = LinearNDInterpolator(list(zip(acc, vel, slope)), fuel)
+        file_list = os.listdir(data_path)
+        acc_f = []
+        vel_f = []
+        fuel_f = []
+        slope_f = []
+        dis_f = []
+        t_f = []
+        veh_weight_f = []
+        for file in file_list:
+            acc = []
+            vel = []
+            fuel = []
+            slope = []
+            dis = []
+            t = []
+            veh_weight = []
+            self.data_loader = DataLoader(data_path+file)
+            self.data_name = data_path.split('/')[-1]
+            for i in range(self.data_loader.moment_total_length):
+                dp = self.data_loader.GetTBasedData(i)
+                if dp.is_brake or dp.gear_position != 12:
+                    continue
+                dis.extend([dp.total_distance_m])
+                t.extend([dp.timestamp_sec])
+                acc.extend([dp.acc])
+                vel.extend([dp.speed])
+                fuel.extend([dp.fuel_lph])
+                slope.extend([dp.slope_rad])
+                veh_weight.extend([dp.vehicle_mass_kg])
+            dis, t, acc, vel, fuel, slope, veh_weight = self.data_filter(dis, t, acc, vel, fuel, slope, veh_weight)
+            acc_f.extend(acc)
+            slope_f.extend(slope)
+            vel_f.extend(vel)
+            fuel_f.extend(fuel)
+            veh_weight_f.extend(veh_weight)
+        self.interp_fuel = LinearNDInterpolator(list(zip(acc_f, vel_f, slope_f)), fuel_f)
         self.backup_fuel =linear_model.LinearRegression()
         x = []
-        x.append(acc)
-        x.append(vel)
-        x.append(slope)
+        x.append(acc_f)
+        x.append(vel_f)
+        x.append(slope_f)
         x = np.transpose(x)
         self.dis= dis
-        self.backup_fuel.fit(x, np.transpose(fuel)) #
-        self.acc_range = [min(acc), max(acc)]
-        self.vel_range = [min(vel), max(vel)]
-        self.slope_range = [min(slope), max(slope)]
-        self.vehicle_mass_kg = veh_weight
-        self.slope = slope
+        self.backup_fuel.fit(x, np.transpose(fuel_f)) #
+        self.acc_range = [min(acc_f), max(acc_f)]
+        self.vel_range = [min(vel_f), max(vel_f)]
+        self.slope_range = [min(slope_f), max(slope_f)]
+        self.vehicle_mass_kg = veh_weight_f
+        self.slope = slope_f
 
-        for idx in range(len(self.slope)):
-            if idx == 0:
-                self.height.extend([0.0])
-            else:
-                self.height.extend([self.height[-1]+self.slope[idx-1]*(self.dis[idx]-self.dis[idx-1])])
-        
+            # for idx in range(len(self.slope)):
+            #     if idx == 0:
+            #         self.height.extend([0.0])
+            #     else:
+            #         self.height.extend([self.height[-1]+self.slope[idx-1]*(self.dis[idx]-self.dis[idx-1])])
+
     def data_filter(self, distance, t, acc, vel, fuel, slope, weight):
         for i in range(len(fuel)):
             prod_distance = []
@@ -78,17 +90,13 @@ class FuelModel(object):
             acc[i] = np.mean(prod_acc)
             vel[i] = np.mean(prod_vel)
             fuel[i] = np.mean(prod_fuel)
-            # slope[i] = np.mean(prod_slope)
-            
+            slope[i] = np.mean(prod_slope)
             weight[i] = np.mean(prod_weight)
-        # slope = smooth(slope, 0.9)
+
         return distance, t, acc, vel, fuel, slope, weight
     
-    def get_map_data(self, factor=0.995, downsampling=100):
-        if downsampling:
-            n = len(self.dis)
-            return self.dis[0:n:downsampling], smooth(self.height, factor)[0:n:downsampling], self.slope[0:n:downsampling]
-        return self.dis, smooth(self.height, factor), self.slope
+    def get_map_data(self):
+        return self.dis, self.height, self.slope
     
     def cal_fuel(self, a, v, grad, ds):
         fuel_rate = self.interp_fuel(a, v, grad)
@@ -334,6 +342,6 @@ class FuelModel(object):
         self.s_border = s_border
 
 if __name__ == "__main__":
-    data_path = '/home/dawei/Documents/pkl_data/2d070af5-e7fd-4214-9968-69bd5a4643cb.pkl'
+    data_path = '/home/dawei/Documents/multi_data_fusion/'
     fmr = FuelModel(data_path)
     fmr.auto_validation(True)

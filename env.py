@@ -112,8 +112,9 @@ class Env(gym.Env):
         return -fuel 
 
     def reset(self, seed=None, options=None):
+        self.monitor = Monitor()
         start_velocity = self.target_v
-        
+
         # for training from a random state
         if self.travel_distance_range:
             self.travel_distance = random.randint(self.travel_distance_range[0], self.travel_distance_range[1])

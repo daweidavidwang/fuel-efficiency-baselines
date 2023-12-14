@@ -16,6 +16,8 @@ from core.fuel_model_jax import FuelModel
 class PCC_alg(object):
     def __init__(self, env_config):
         self.v0 = self.target_v = env_config['target_v']
+        if 'start_velocity' in env_config:
+            self.v0 = env_config['start_velocity'] 
         self.ds = env_config['ds']
         self.start_location = env_config['start_location'] if 'start_location' in env_config else 0
         self.travel_distance = env_config['travel_distance']
@@ -25,7 +27,7 @@ class PCC_alg(object):
         self.nelem = math.floor(self.travel_distance/self.ds)+1 #total 
         self.Mveh = env_config['Mveh']
         self.fuel_model = FuelModel(self.Mveh)
-        self.loc = [i*self.ds for i in range(self.nelem)]
+        self.loc = [i*self.ds + int(self.start_location) for i in range(self.nelem)]
         self.x0 = [self.v0 for _ in range(self.nelem)]
         self.speed_constraints = env_config['speed_constraints']
 
@@ -61,7 +63,7 @@ class PCC_alg(object):
         a = np.append(a, np.array([0.0]), 0)
         x_node = self.loc
         h_node = self.query_hnode(self.loc)
-        # jax.debug.print("loc:{}", loc)
+        # jax.debug.print("loc:{}", self.loc)
         # jax.debug.print("hnode:{}", h_node)
         dx_elem = np.array([x_node[i+1] - x_node[i] for i in range(0, len(x_node)-1)])
         dh_elem = np.array([h_node[i+1] - h_node[i] for i in range(0, len(h_node)-1)])
@@ -123,7 +125,7 @@ class PCC_alg(object):
 
         # executing the solver
         res = minimize_ipopt(obj_jit, jac=obj_grad, hess=obj_hess, x0=self.x0, bounds=bnds,
-                        constraints=cons, options={'disp': 5})
+                        constraints=cons, options={'print_level': 5})
 
         return res
 

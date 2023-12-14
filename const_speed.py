@@ -43,16 +43,16 @@ obs, info = env.reset()
 terminated = False
 reward_list = []
 obs_list = []
-
-obs, info = env.reset()
-print('start loc'+str(env.start_location))
-terminated = False
-truncated = False
-while not (terminated or truncated):
-    action = 0.0
-    obs, reward, terminated, truncated, info = env.step(action)
-    reward_list.extend([reward])
-print(info['total_fuel'])
-env.monitor.plot()
-print(info['const_baseline_fuel'])
-print(reward_list)
+while True:
+    obs, info = env.reset()
+    print('start loc'+str(env.start_location))
+    terminated = False
+    truncated = False
+    while not (terminated or truncated):
+        action = 0.0
+        obs, reward, terminated, truncated, info = env.step(action)
+        reward_list.extend([reward])
+    # print(info['total_fuel'])
+    # env.monitor.plot()
+    # print(info['const_baseline_fuel'])
+    # print(reward_list)

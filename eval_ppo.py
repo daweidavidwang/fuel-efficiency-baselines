@@ -21,13 +21,17 @@ fuel_model =FMR(fuel_model_data_path)
 # slope_map.construct(mode='height', ALTI_X=ALTI_X, input_b=ALTI, slope_range=[-0.025183296730539186, 0.025183296730539186]   )
 
 ## real world map
-ALTI_X, ALTI, ALTI_slope = fuel_model.get_map_data()
+# ALTI_X, ALTI, ALTI_slope = fuel_model.get_map_data()
+# slope_map = Slope()
+# slope_map.construct(mode='slope', ALTI_X=ALTI_X, input_b=ALTI_slope, slope_range=[-0.005093949143751466, 0.005093949143751466] )
+
+ALTI_X, ALTI, ALTI_slope = fuel_model.get_map_data(factor=0,downsampling=1000)
 slope_map = Slope()
-slope_map.construct(mode='slope', ALTI_X=ALTI_X, input_b=ALTI_slope, slope_range=[-0.005093949143751466, 0.005093949143751466] )
+# slope_map.construct(mode='slope', ALTI_X=ALTI_X, input_b=ALTI_slope, slope_range=[-0.005093949143751466, 0.005093949143751466] )
+slope_map.construct(mode='height', ALTI_X=ALTI_X, input_b=ALTI, slope_range=[-0.005093949143751466, 0.005093949143751466] )
 
 
-
-checkpoint_path = '/home/dawei/Documents/checkpoint_000145'
+checkpoint_path = '/home/dawei/Documents/checkpoint_000200'
 algo = Algorithm.from_checkpoint(checkpoint_path)
 
 env_config = {
@@ -35,11 +39,11 @@ env_config = {
     'Mveh': 55e3,
     'target_v': 21.0,
     'ds': 100,
-    'start_location': 0,
+    'start_location': 5000,
     'travel_distance': 100000,
     'obs_horizon':2000,
     'obs_step':20,
-    'acc_constraints':[-0.02, 0.02] ,
+    'acc_constraints':[-0.05, 0.05] ,
     'speed_constraints':[18.922531942120045, 24.616176171879957],
     'timeliness_check':True,
     'fuel_model':fuel_model,

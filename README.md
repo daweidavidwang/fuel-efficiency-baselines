@@ -6,7 +6,8 @@ conda activate rl_pcc
 
 pip install -r requirements.txt
 
-conda install -c conda-forge cyipopt
+## cyipopt 1.3.0 contains bug on displaying log
+conda install -c conda-forge cyipopt==1.2.0
 
 
 keep background running
