@@ -6,7 +6,6 @@ from ray import air
 from core.custom_logger import CustomLoggerCallback
 from ray import tune
 from ray.rllib.algorithms.algorithm import Algorithm
-from core.fuel_model_real import FuelModel as FMR
 from core.fuel_model import FuelModel as FM
 from core.slope_map import Slope
 ray.init(local_mode= True)

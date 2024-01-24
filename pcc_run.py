@@ -1,7 +1,6 @@
 from env import Env
 
 from pcc_ipopt.pcc import PCC_alg
-from core.fuel_model_real import FuelModel as FMR
 from core.fuel_model import FuelModel as FM
 from core.slope_map import Slope
 

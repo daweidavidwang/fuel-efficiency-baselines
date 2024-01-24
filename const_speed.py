@@ -2,7 +2,6 @@ from env import Env
 import random
 import math
 import numpy as np
-from core.fuel_model_real import FuelModel as FMR
 from core.fuel_model import FuelModel as FM
 
 from core.slope_map import Slope
